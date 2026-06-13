@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پنل سوپر پروکسی شما</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Tahoma', sans-serif;
+            padding: 20px;
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(0,0,0,0.7);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px;
+            transition: 0.3s;
+            width: 90%;
+        }
+        button:hover {
+            transform: scale(1.02);
+            background: #45a049;
+        }
+        .danger-btn {
+            background: #f44336;
+        }
+        .danger-btn:hover {
+            background: #da190b;
+        }
+        .info-box {
+            background: #2196F3;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            direction: ltr;
+            text-align: left;
+            font-family: monospace;
+            word-break: break-all;
+        }
+        input, select {
+            width: 95%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: none;
+            font-size: 16px;
+        }
+        .status {
+            background: #4CAF50;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚡ پنل فراگیر شما ⚡</h1>
+        <p style="text-align: center;">همه قابلیت‌های Nova + BPB + EdgeTunnel در یک جا</p>
+        
+        <div id="statusMsg" class="status" style="display:none;"></div>
+        
+        <h3>🔧 تنظیمات سریع</h3>
+        
+        <label>📡 انتخاب پروتکل اصلی:</label>
+        <select id="protocol">
+            <option value="vless">VLESS (سریع و پایدار)</option>
+            <option value="trojan">Trojan (مقاوم)</option>
+            <option value="ss">Shadowsocks (سبک)</option>
+        </select>
+        
+        <label>🎯 آدرس IP تمیز (خالی = خودکار):</label>
+        <input type="text" id="cleanIP" placeholder="مثال: 104.18.0.1 یا خالی بگذارید">
+        
+        <label>🔗 زنجیره پروکسی (اختیاری):</label>
+        <input type="text" id="chainProxy" placeholder="مثال: ws://1.2.3.4:8080 یا خالی">
+        
+        <label>🎮 فعالسازی Fragment (برای اینترنت سخت):</label>
+        <select id="fragment">
+            <option value="off">خاموش</option>
+            <option value="on">روشن (قوی‌تر)</option>
+        </select>
+        
+        <hr>
+        
+        <button id="btnScanIP">✅ اسکن خودکار IP تمیز (یک کلیک)</button>
+        <button id="btnGenConfig">🎲 ساخت کانفیگ جدید + لینک اشتراک</button>
+        <button id="btnIranMode">🇮🇷 فعالسازی کامل حالت ایران (یک کلیک)</button>
+        <button id="btnChainMode">⛓️ فعالسازی زنجیره پروکسی</button>
+        <button class="danger-btn" id="btnReset">⚠️ بازنشانی همه تنظیمات</button>
+        
+        <div id="resultBox" class="info-box" style="display:none;">
+            <strong>📋 نتیجه:</strong><br>
+            <span id="resultText"></span>
+        </div>
+    </div>
+
+    <script>
+        // اینجا کدهای جاوااسکریپت برای ارتباط با Worker شما قرار می‌گیرد
+        const apiUrl = window.location.origin;
+        
+        async function callApi(endpoint, data = {}) {
+            const response = await fetch(`${apiUrl}/api/${endpoint}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            return await response.json();
+        }
+        
+        function showMessage(msg, isError = false) {
+            const box = document.getElementById('resultBox');
+            const textSpan = document.getElementById('resultText');
+            textSpan.innerText = msg;
+            box.style.display = 'block';
+            if(isError) box.style.backgroundColor = '#f44336';
+            else box.style.backgroundColor = '#4CAF50';
+            setTimeout(() => box.style.display = 'none', 5000);
+        }
+        
+        document.getElementById('btnScanIP').onclick = async () => {
+            showMessage("در حال اسکن IP تمیز ... صبر کنید");
+            const res = await callApi('scan-ip');
+            if(res.success) showMessage(`IP تمیز پیدا شد: ${res.ip}`);
+            else showMessage("خطا در اسکن: " + res.error, true);
+        };
+        
+        document.getElementById('btnGenConfig').onclick = async () => {
+            const protocol = document.getElementById('protocol').value;
+            const cleanIP = document.getElementById('cleanIP').value;
+            const chain = document.getElementById('chainProxy').value;
+            const frag = document.getElementById('fragment').value;
+            
+            const res = await callApi('make-config', { protocol, cleanIP, chain, fragment: frag });
+            if(res.success) {
+                showMessage(`✅ کانفیگ ساخته شد!\nلینک اشتراک: ${res.subscribeLink}\nکانفیگ base64: ${res.configBase64}`);
+            } else showMessage("خطا: " + res.error, true);
+        };
+        
+        document.getElementById('btnIranMode').onclick = async () => {
+            const res = await callApi('iran-mode');
+            if(res.success) showMessage("حالت ایران فعال شد. دامنه‌های ایرانی مستقیم می‌روند.");
+            else showMessage("خطا: " + res.error, true);
+        };
+        
+        document.getElementById('btnChainMode').onclick = async () => {
+            const chainIp = prompt("آدرس سرور زنجیره (مثل 1.2.3.4:8080) را وارد کنید:");
+            if(chainIp) {
+                const res = await callApi('set-chain', { chain: chainIp });
+                if(res.success) showMessage(`زنجیره به ${chainIp} متصل شد.`);
+                else showMessage("خطا: " + res.error, true);
+            }
+        };
+        
+        document.getElementById('btnReset').onclick = async () => {
+            if(confirm("همه تنظیمات پاک می‌شوند. ادامه می‌دهید؟")) {
+                const res = await callApi('reset-all');
+                if(res.success) showMessage("تنظیمات به حالت اولیه برگشت.");
+                else showMessage("خطا: " + res.error, true);
+            }
+        };
+    </script>
+</body>
+</html>
