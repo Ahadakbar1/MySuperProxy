@@ -5,7 +5,7 @@
 // provision the KV namespace with the binding name "KV" (required by /install).
 {
   "$schema": "https://unpkg.com/wrangler/config-schema.json",
-  "name": "nova-proxy",
+  "name": "my-super-proxyw",
   "main": "worker.js",
   "compatibility_date": "2025-01-01",
   "kv_namespaces": [
